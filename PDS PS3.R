@@ -53,15 +53,91 @@ ggplot(data=primaryPolls)+
   theme(plot.title = element_text(hjust = 0.5), axis.text.x=element_text(angle=90, hjust=1)) 
 
 #2- finish what we started on 2/13/2020
+library(dplyr)
+library(tidyr)
+relevant <- primaryPolls %>%
+  filter(candidate_name %in% c("Amy Klobuchar", "Bernard Sanders", "Elizabeth Warren", "Joseph R. Biden Jr.", "Michael Bloomberg", "Pete Buttigieg", "Tom Steyer")) %>%
+  select(candidate_name, pct, state)
+dim(relevant) #567x3
+relevant %>%
+  pivot_wider(names_from = c(state), values_from = c(pct))
 
-
-
-
-
-
+colnames(relevant)
 
 ######tidyverse######
 #3
 
-########text as data#######
+#reading in data
+library(fivethirtyeight)
+library(tidyverse)
+library(readr)
+polls <- read_csv('https://jmontgomery.github.io/PDS/Datasets/president_primary_polls_feb2020.csv')
+Endorsements <- endorsements_2020
+
+#changing endorsements variable name endorsee to candidate_name
+Endorsements <- rename(Endorsements, candidate_name = endorsee)
+colnames(Endorsements)
+
+#changing endorsements data frame into a tibble object
+Endorsements <- as_tibble(Endorsements)
+class(Endorsements)
+
+#filtering poll to only have the 6 Klobuchar, Sanders, Warren, Biden, Bloomberg, Buttigieg
+#and to only candidate_name, sample_size, start_date, party and pct
+subpolls <- polls %>%
+  filter(candidate_name %in% c("Amy Klobuchar", "Bernard Sanders", "Elizabeth Warren", "Joseph R. Biden Jr.", "Michael Bloomberg", "Pete Buttigieg")) %>%
+  select(candidate_name, sample_size, start_date, party, pct)
+subpolls
+
+#find different spellings in the datasets and make them the same
+#with only DPLYR
+#we can see through setdiff that in subpolls, the names are Bernard Sanders and Joseph R. Biden Jr. 
+#we can change these to Bernie Sanders and Joe Biden
+setdiff(subpolls$candidate_name, Endorsements$candidate_name)
+subpolls <- subpolls %>%
+  mutate(candidate_name = recode(candidate_name, "Bernard Sanders" = "Bernie Sanders", "Joseph R. Biden Jr." = "Joe Biden"))
+
+#checking that I have five candidates
+intersect(subpolls$candidate_name, Endorsements$candidate_name)
+
+#combining the two datasets by candidate name using dplyr
+combined <- subpolls %>%
+  inner_join(Endorsements, by = "candidate_name")
+unique(combined$candidate_name)
+
+colnames(combined)
+#creating a variable which indicates number of endorsements for
+#each of the five candidates
+countEndorse <- combined %>%
+  group_by(candidate_name) %>%
+  add_tally() %>%
+  filter(!is.na(candidate_name))
+colnames(countEndorse)
+
+#plot the number of endorsements each of the 5 candidates have
+#save as p
+p <- ggplot(data=countEndorse, mapping=aes(x=candidate_name))+
+  geom_bar()
+
+#run p + theme_dark()
+p + theme_dark()
+
+#change x and y labels, adding title, picking a theme
+p <- ggplot(data=countEndorse, mapping=aes(x=candidate_name, fill=candidate_name))+
+  geom_bar()
+
+p + theme_classic() +
+  ggtitle("Endorsements of Democratic Candidates for POTUS")+
+  labs(x="Democratic Candidates", y="Number of Endorsements") +
+  theme(legend.position="none", plot.title = element_text(hjust = 0.5), axis.text.x=element_text(angle=0, hjust=0.5)) 
+
+###text as data###
 #4
+
+
+
+
+
+
+
+
