@@ -133,11 +133,60 @@ p + theme_classic() +
 
 ###text as data###
 #4
+library(tidyverse)
+library(tm)
+library(lubridate)
+library(wordcloud)
+tweets <- read_csv('https://politicaldatascience.com/PDS/Datasets/trump_tweets.csv')
 
+#separating the created_at variable
+as_tibble(tweets)
+tweets <- tweets %>% 
+  separate(created_at, c("Date", "Time"), sep = " ")  
 
+#report ranges of dates in dataset
+dateRange <- range(tweets$Date)
 
+#removing retweets
+tweets <- tweets %>%
+  filter(is_retweet == FALSE)
 
+#finding most favorited tweets
+tweets <- tweets %>%
+  arrange(desc(favorite_count))
+tweets$text[1:5]
 
+#finding most retweeted tweets
+tweets <- tweets %>%
+  arrange(desc(retweet_count))
+tweets$text[1:5]
 
+#Remove extraneous whitespace
+
+tweets <- read_csv('https://politicaldatascience.com/PDS/Datasets/trump_tweets.csv')
+#making all lowercase
+words <- str_split(tweets$text, pattern = " ")
+words <- str_c(unlist(words))
+words <- str_to_lower(words)
+
+#removing punctuation and special characters
+words <- str_replace_all(words, "[^[:alnum:]]", "")
+
+#removing all numbers
+words <- removeNumbers(words)
+
+#removing stop words and blank spaces
+fillers <- c(stopwords("en"), "see", "im", "people", "new", "want", "one", "even", "must", "need", "done", "back", "just", "going", "know", "can", "said", "like", "realdonaldtrump", "will", "rt", "")
+content <- words[!(words %in% fillers)]
+length(content)
+
+#making a word cloud requires frequencies of terms
+frequencies <- as.tibble(content) %>%
+  group_by(word = value) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count))
+
+#making the actual word cloud
+wordcloud(frequencies$word, frequencies$count, min.freq = 3, max.words = 50)
 
 
