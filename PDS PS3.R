@@ -55,14 +55,22 @@ ggplot(data=primaryPolls)+
 #2- finish what we started on 2/13/2020
 library(dplyr)
 library(tidyr)
+
+#only relevant candidates
 relevant <- primaryPolls %>%
   filter(candidate_name %in% c("Amy Klobuchar", "Bernard Sanders", "Elizabeth Warren", "Joseph R. Biden Jr.", "Michael Bloomberg", "Pete Buttigieg", "Tom Steyer")) %>%
   select(candidate_name, pct, state)
 dim(relevant) #567x3
-relevant %>%
-  pivot_wider(names_from = c(state), values_from = c(pct))
 
-colnames(relevant)
+#reorganizing
+relevant <- relevant %>%
+  pivot_wider(names_from = state, values_from = pct)
+dim(relevant)
+
+#comparing sizes
+object.size(primaryPolls)
+object.size(relevant)
+
 
 ######tidyverse######
 #3
@@ -146,6 +154,7 @@ tweets <- tweets %>%
 
 #report ranges of dates in dataset
 dateRange <- range(tweets$Date)
+dateRange
 
 #removing retweets
 tweets <- tweets %>%
@@ -161,10 +170,7 @@ tweets <- tweets %>%
   arrange(desc(retweet_count))
 tweets$text[1:5]
 
-#Remove extraneous whitespace
-
-tweets <- read_csv('https://politicaldatascience.com/PDS/Datasets/trump_tweets.csv')
-#making all lowercase
+#Remove extraneous whitespace and making all lowercase
 words <- str_split(tweets$text, pattern = " ")
 words <- str_c(unlist(words))
 words <- str_to_lower(words)
@@ -188,5 +194,18 @@ frequencies <- as.tibble(content) %>%
 
 #making the actual word cloud
 wordcloud(frequencies$word, frequencies$count, min.freq = 3, max.words = 50)
+
+#Create a document term matrix called DTM that includes the argument 
+#control = list(weighting = weightTfIdf)
+content <- VectorSource(tweets$text)
+contentCorpus <- SimpleCorpus(content, control = list(language = "en"))
+DTM <- DocumentTermMatrix(contentCorpus, control = list(removeNumbers = T, stopWords = T, weighting = weightTfIdf))
+dim(DTM)
+
+
+#reporting 50 words with highest tf.idf scores using a lower frequency bound of .8
+findFreqTerms(DTM, lowfreq = 0.8)
+
+
 
 
