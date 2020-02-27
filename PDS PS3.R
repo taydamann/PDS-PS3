@@ -204,8 +204,5 @@ dim(DTM)
 
 
 #reporting 50 words with highest tf.idf scores using a lower frequency bound of .8
-findFreqTerms(DTM, lowfreq = 0.8)
-
-
-
+head(findFreqTerms(DTM, lowfreq = 0.8), n=50)
 
